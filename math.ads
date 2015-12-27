@@ -17,4 +17,5 @@ package Math is
    function "+" (A : Vecteur ; B : Vecteur) return Vecteur;
    -- multiplication scalaire vecteur
    function "*" (Facteur : Float ; V : Vecteur) return Vecteur;
+   function "=" (A : Vecteur ; B : Vecteur) return Boolean;
 end;
