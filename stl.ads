@@ -2,8 +2,11 @@ with Liste_Generique;
 with Math; use Math;
 
 package STL is
+   NB_ANGLES : constant Positive := 72;
+   PAS_ANGLE : constant Float := 360.0 / Float(NB_ANGLES);
+
    type Facette is record
-      P1, P2, P3 : Vecteur(1..3);
+      P1, P2, P3 : Point3D;
    end record;
 
    package Liste_Facettes is new Liste_Generique(Facette);

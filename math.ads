@@ -4,6 +4,7 @@ package Math is
 
    type Vecteur is array(Positive range<>) of Float;
    subtype Point2D is Vecteur(1..2);
+   subtype Point3D is Vecteur(1..3);
    package Liste_Points is new Liste_Generique(Point2D);
    use Liste_Points;
 
