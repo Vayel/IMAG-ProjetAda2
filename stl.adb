@@ -5,9 +5,6 @@ use Ada.Numerics;
 with Ada.Numerics.Elementary_Functions;
 use Ada.Numerics.Elementary_Functions;
 
--- TODO
-with Ada.Float_Text_IO; use Ada.Float_Text_IO;
-
 package body STL is
 
    -- On translate tous les points de (-xmin, -ymin)
@@ -53,15 +50,6 @@ package body STL is
       return P2;
    end;
 
-   -- TODO
-   procedure Afficher_Pt(P : in out Point2D) is
-   begin
-      Put(P(1));
-      Put(P(2));
-      Put_Line("");
-   end;
-   procedure Afficher is new Liste_Points.Parcourir(Afficher_Pt);
-
    procedure Creation(Segments : in out Liste_Points.Liste ;
                       Facettes :    out Liste_Facettes.Liste) is
       -- Prend deux points 2D, les fait tourner autour de l'axe y=0 et relie
@@ -84,13 +72,8 @@ package body STL is
       end;
       procedure Cree_Facettes_Cotes is new Liste_Points.Parcourir_Par_Couples(Cree_Facettes_Cote);
    begin
-      Afficher(Segments);
-      Put_Line("------------");
       Decaler(Segments);
-      Afficher(Segments);
-      Put_Line("------------");
       Joindre_Axe(Segments);
-      Afficher(Segments);
       Cree_Facettes_Cotes(Segments);
    end;
 

@@ -4,9 +4,10 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings; use Ada.Strings;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with GNAT.String_Split; use GNAT.String_Split;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 package body Parser_Svg is
-   BEZIER_NB_PTS : constant Positive := 100;
+   BEZIER_NB_PTS : constant Positive := 50;
 
    function Recupere_Chemin(Nom_Fichier : String) return String is
       F : File_type;
@@ -39,20 +40,49 @@ package body Parser_Svg is
       return Pt;
    end;
 
-   procedure Lit_Point(P : String; L : out Liste) is
+   function Rel_Vers_Abs(P : Point2D; L : Liste) return Point2D is
    begin
-      Insertion_Queue(L, Convertit_Point(P));
+      if Taille(L) /= 0 then
+         return P + Queue(L);
+      else
+         return P; -- Relatif par rapport a l'origine
+      end if;
    end;
 
-   procedure Lit_Bezier(C1, C2, P2 : String; L : out Liste) is
+   procedure Lit_Point(Ps : String; L : out Liste; Rel : Boolean := False) is
+      P : Point2D := Convertit_Point(Ps);
    begin
-      Bezier(Queue(L), Convertit_Point(C1), Convertit_Point(C2), Convertit_Point(P2),
-             BEZIER_NB_PTS, L);
+      if Rel then
+         P := Rel_Vers_Abs(P, L);
+      end if;
+
+      Insertion_Queue(L, P);
    end;
 
-   procedure Lit_Bezier(C, P2 : String; L : out Liste) is
+   procedure Lit_Bezier(C1s, C2s, P2s : String; L : out Liste; Rel : Boolean := False) is
+      C1 : Point2D := Convertit_Point(C1s);
+      C2 : Point2D := Convertit_Point(C2s);
+      P2 : Point2D := Convertit_Point(P2s);
    begin
-      Bezier(Queue(L), Convertit_Point(C), Convertit_Point(P2), BEZIER_NB_PTS, L);
+      if Rel then
+         C1 := Rel_Vers_Abs(C1, L);
+         C2 := Rel_Vers_Abs(C2, L);
+         P2 := Rel_Vers_Abs(P2, L);
+      end if;
+
+      Bezier(Queue(L), C1, C2, P2, BEZIER_NB_PTS, L);
+   end;
+
+   procedure Lit_Bezier(Cs, P2s : String; L : out Liste; Rel : Boolean := False) is
+      C : Point2D := Convertit_Point(Cs);
+      P2 : Point2D := Convertit_Point(P2s);
+   begin
+      if Rel then
+         C := Rel_Vers_Abs(C, L);
+         P2 := Rel_Vers_Abs(P2, L);
+      end if;
+
+      Bezier(Queue(L), C, P2, BEZIER_NB_PTS, L);
    end;
 
    procedure Chemin_Vers_Points(Chemin : String; L : out Liste) is
@@ -65,22 +95,22 @@ package body Parser_Svg is
          -- I designe l'index du premier parametre, et non de la lettre
          case Der_Lettre is
             when 'm'|'M' => -- Debut du chemin : M x,y
-               Lit_Point(Slice(Subs, I), L);
+               Lit_Point(Slice(Subs, I), L, Is_Lower(Der_Lettre));
                I := I + 1;
             when 'l'|'L' => -- Ligne droite : L x,y
-               Lit_Point(Slice(Subs, I), L);
+               Lit_Point(Slice(Subs, I), L, Is_Lower(Der_Lettre));
                I := I + 1;
             when 'h'|'H' => -- Droite horizontale : H x
-               Lit_Point(Slice(Subs, I) & "," & Float'Image(Queue(L)(2)), L);
+               Lit_Point(Slice(Subs, I) & "," & Float'Image(Queue(L)(2)), L, Is_Lower(Der_Lettre));
                I := I + 1;
             when 'v'|'V' => -- Droite verticale : V y
-               Lit_Point(Float'Image(Queue(L)(1)) & "," & Slice(Subs, I), L);
+               Lit_Point(Float'Image(Queue(L)(1)) & "," & Slice(Subs, I), L, Is_Lower(Der_Lettre));
                I := I + 1;
             when 'c'|'C' => -- Bezier cubique : C c1x,c1y c2x,c2y endx,endy
-               Lit_Bezier(Slice(Subs, I), Slice(Subs, I+1), Slice(Subs, I+2), L);
+               Lit_Bezier(Slice(Subs, I), Slice(Subs, I+1), Slice(Subs, I+2), L, Is_Lower(Der_Lettre));
                I := I + 3;
             when 'q'|'Q' => -- Bezier quadratique : Q cx,cy endx,endy
-               Lit_Bezier(Slice(Subs, I), Slice(Subs, I+1), L);
+               Lit_Bezier(Slice(Subs, I), Slice(Subs, I+1), L, Is_Lower(Der_Lettre));
                I := I + 2;
             when others => raise DATA_ERROR with "Seules les lettres MLHVCQ sont supportees.";
          end case;
