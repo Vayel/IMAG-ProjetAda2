@@ -44,19 +44,15 @@ package body Parser_Svg is
       Insertion_Queue(L, Convertit_Point(P));
    end;
 
-   procedure Lit_Bezier_C(C1, C2, P2 : String; L : out Liste) is
-      Bezier_L : Liste;
+   procedure Lit_Bezier(C1, C2, P2 : String; L : out Liste) is
    begin
       Bezier(Queue(L), Convertit_Point(C1), Convertit_Point(C2), Convertit_Point(P2),
-             BEZIER_NB_PTS, Bezier_L);
-      Fusion(L, Bezier_L);
+             BEZIER_NB_PTS, L);
    end;
 
-   procedure Lit_Bezier_Q(C, P2 : String; L : out Liste) is
-      Bezier_L : Liste;
+   procedure Lit_Bezier(C, P2 : String; L : out Liste) is
    begin
-      Bezier(Queue(L), Convertit_Point(C), Convertit_Point(P2), BEZIER_NB_PTS, Bezier_L);
-      Fusion(L, Bezier_L);
+      Bezier(Queue(L), Convertit_Point(C), Convertit_Point(P2), BEZIER_NB_PTS, L);
    end;
 
    procedure Chemin_Vers_Points(Chemin : String; L : out Liste) is
@@ -74,17 +70,17 @@ package body Parser_Svg is
             when 'l'|'L' => -- Ligne droite : L x,y
                Lit_Point(Slice(Subs, I), L);
                I := I + 1;
-            when 'h'|'H' => -- Droite horizontale : H y
-               Lit_Point("0.0," & Slice(Subs, I), L);
+            when 'h'|'H' => -- Droite horizontale : H x
+               Lit_Point(Slice(Subs, I) & "," & Float'Image(Queue(L)(2)), L);
                I := I + 1;
-            when 'v'|'V' => -- Droite verticale : V x
-               Lit_Point(Slice(Subs, I) & ",0.0", L);
+            when 'v'|'V' => -- Droite verticale : V y
+               Lit_Point(Float'Image(Queue(L)(1)) & "," & Slice(Subs, I), L);
                I := I + 1;
             when 'c'|'C' => -- Bezier cubique : C c1x,c1y c2x,c2y endx,endy
-               Lit_Bezier_C(Slice(Subs, I), Slice(Subs, I+1), Slice(Subs, I+2), L);
+               Lit_Bezier(Slice(Subs, I), Slice(Subs, I+1), Slice(Subs, I+2), L);
                I := I + 3;
             when 'q'|'Q' => -- Bezier quadratique : Q cx,cy endx,endy
-               Lit_Bezier_Q(Slice(Subs, I), Slice(Subs, I+1), L);
+               Lit_Bezier(Slice(Subs, I), Slice(Subs, I+1), L);
                I := I + 2;
             when others => raise DATA_ERROR with "Seules les lettres MLHVCQ sont supportees.";
          end case;
@@ -95,7 +91,7 @@ package body Parser_Svg is
              Separators => " ",
              Mode => Multiple);
 
-      while I < Slice_Count(Subs) loop
+      while I <= Slice_Count(Subs) loop
          declare
             Sub : constant String := Slice(Subs, I);
          begin

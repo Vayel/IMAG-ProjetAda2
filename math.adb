@@ -38,25 +38,26 @@ package body Math is
    -- Cubique
    procedure Bezier(P1, C1, C2, P2 : Point2D ; Nb_Points : Positive ;
                     Points : out Liste) is
-      T : Float := 0.0;
-      Step : Float := 1.0/Float(Nb_Points);
+      T : Float;
+      Pas : Float := 1.0/Float(Nb_Points);
    begin
-      for i in 1..Nb_Points loop
+      -- 0 <= T <= 1
+      for i in 0..Nb_Points loop
+         T := Float(i) * Pas;
          Insertion_Queue(Points, (1.0 - T)**3 * P1 + 3.0 * T * (1.0 - T)**2 * C1 +
                          3.0 * T**2 * (1.0 - T) * C2 + T**3 * P2);
-         T := T + Step;
       end loop;
    end;
 
    -- Quadratique
    procedure Bezier(P1, C, P2 : Point2D ; Nb_Points : Positive ;
                     Points : out Liste) is
-      T : Float := 0.0;
-      Step : Float := 1.0/Float(Nb_Points);
+      T : Float;
+      Pas : Float := 1.0/Float(Nb_Points);
    begin
-      for i in 1..Nb_Points loop
+      for i in 0..Nb_Points loop
+         T := Float(i) * Pas;
          Insertion_Queue(Points, (1.0 - T)**2 * P1 + 2.0 * T * (1.0 - T) * C + T**2 * P2);
-         T := T + Step;
       end loop;
    end;
 end;

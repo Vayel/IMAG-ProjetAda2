@@ -31,6 +31,7 @@ package body Liste_Generique is
    procedure Insertion_Tete(L : in out Liste ; E : Element) is
    begin
       L.Debut := new Cellule'(E, L.Debut);
+      L.Taille := L.Taille + 1;
 
       if L.Fin = null then
           L.Fin := L.Debut;
@@ -44,6 +45,7 @@ package body Liste_Generique is
       else
          L.Fin.Suivant := new Cellule'(E, null);
          L.Fin := L.Fin.Suivant;
+         L.Taille := L.Taille + 1;
       end if;
    end;
 

@@ -5,6 +5,9 @@ use Ada.Numerics;
 with Ada.Numerics.Elementary_Functions;
 use Ada.Numerics.Elementary_Functions;
 
+-- TODO
+with Ada.Float_Text_IO; use Ada.Float_Text_IO;
+
 package body STL is
 
    -- On translate tous les points de (-xmin, -ymin)
@@ -42,13 +45,22 @@ package body STL is
    end;
 
    function Pivote_Point(P : Point2D; Angle : Float) return Point3D is
-      P2 : Point3D := (0.0, P(2), 0.0);
+      P2 : Point3D := (P(1), 0.0, 0.0);
    begin
-      P2(1) := P(1) * Cos(X => Angle, Cycle => 360.0);
-      P2(3) := P(1) * Sin(X => Angle, Cycle => 360.0);
+      P2(2) := P(2) * Cos(X => Angle, Cycle => 360.0);
+      P2(3) := P(2) * Sin(X => Angle, Cycle => 360.0);
 
       return P2;
    end;
+
+   -- TODO
+   procedure Afficher_Pt(P : in out Point2D) is
+   begin
+      Put(P(1));
+      Put(P(2));
+      Put_Line("");
+   end;
+   procedure Afficher is new Liste_Points.Parcourir(Afficher_Pt);
 
    procedure Creation(Segments : in out Liste_Points.Liste ;
                       Facettes :    out Liste_Facettes.Liste) is
@@ -72,8 +84,13 @@ package body STL is
       end;
       procedure Cree_Facettes_Cotes is new Liste_Points.Parcourir_Par_Couples(Cree_Facettes_Cote);
    begin
+      Afficher(Segments);
+      Put_Line("------------");
       Decaler(Segments);
+      Afficher(Segments);
+      Put_Line("------------");
       Joindre_Axe(Segments);
+      Afficher(Segments);
       Cree_Facettes_Cotes(Segments);
    end;
 
@@ -111,7 +128,7 @@ package body STL is
       procedure Dessiner_Facettes is new Liste_Facettes.Parcourir(Dessiner_Facette);
    begin
       Create(F, Out_File, Nom_Fichier);
-      Put(F, Header("test"));
+      Put_Line(F, Header("test"));
       Dessiner_Facettes(Facettes);
       Put(F, Footer("test"));
       Close(F);
