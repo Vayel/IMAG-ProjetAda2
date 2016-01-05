@@ -30,7 +30,7 @@ package body STL is
       Translater_Pts(Segments);
    end;
 
-   -- On joint, si besoin, les premier et dernier points a l'axe y=0
+   -- On joint, si besoin, les premier et dernier points a l'axe x
    procedure Joindre_Axe(Segments : in out Liste_Points.Liste) is
    begin
       if Liste_Points.Tete(Segments)(2) /= 0.0 then
@@ -41,6 +41,8 @@ package body STL is
       end if;
    end;
 
+   -- Prend un point du plan et retourne son image par la rotation d'angle
+   -- Angle degres autour de l'axe x
    function Pivote_Point(P : Point2D; Angle : Float) return Point3D is
       P2 : Point3D := (P(1), 0.0, 0.0);
    begin
@@ -55,6 +57,9 @@ package body STL is
       -- Prend deux points 2D, les fait tourner autour de l'axe y=0 et relie
       -- les cercles obtenus par des facettes
       procedure Cree_Facettes_Cote(P1, P2 : Point2D) is
+        -- Avec quatre points, on fait deux facettes :
+        -- |\ |
+        -- | \|
         Facettes_Cote : Liste_Facettes.Liste;
         P1C1, P2C1, P1C2, P2C2 : Point3D;
       begin
@@ -64,6 +69,7 @@ package body STL is
             P1C2 := Pivote_Point(P2, Float(i) * PAS_ANGLE);
             P2C2 := Pivote_Point(P2, Float(i+1) * PAS_ANGLE);
 
+            -- On cree les facettes en lisant les points dans le sens trigo
             Liste_Facettes.Insertion_Queue(Facettes_Cote, (P1C1, P1C2, P2C1));
             Liste_Facettes.Insertion_Queue(Facettes_Cote, (P2C1, P1C2, P2C2));
          end loop;
@@ -91,6 +97,7 @@ package body STL is
                          Facettes : Liste_Facettes.Liste) is
       F : File_type;
 
+      -- Represente la facette Fac dans le fichier F au format STL
       procedure Dessiner_Facette(Fac : in out Facette) is
       begin
          Put_Line(F, "  facet");

@@ -16,16 +16,19 @@ package body Parser_Svg is
       Open(F, In_File, Nom_Fichier);
       Line := To_Unbounded_String(Trim(Get_Line(F), Both));
 
-      while Length(Line) < 2 or else not (To_String(Line)(1..2) = "d=") loop
+      while Length(Line) < 2 or else (To_String(Line)(1..2) /= "d=") loop
          Line := To_Unbounded_String(Trim(Get_Line(F), Both));
       end loop;
+      -- Line = 'd="..."'
 
       Close(F);
 
-      return To_String(Line)(4..Length(Line)-1); -- Entre les guillemets
+      return To_String(Line)(4..Length(Line)-1);
    end;
 
-   function Convertit_Point(P : String) return Point2D is
+   function Chaine_Vers_Point(P : String) return Point2D is
+      -- P est de la forme "X,Y"
+
       Subs : Slice_Set;
       Pt : Point2D;
    begin
@@ -40,6 +43,7 @@ package body Parser_Svg is
       return Pt;
    end;
 
+   -- Coordonnees relatives vers absolues
    function Rel_Vers_Abs(P : Point2D; L : Liste) return Point2D is
    begin
       if Taille(L) /= 0 then
@@ -49,8 +53,9 @@ package body Parser_Svg is
       end if;
    end;
 
+   -- Ajoute un point de la forme "x,y" ou "dx,dy" en queue de liste
    procedure Lit_Point(Ps : String; L : out Liste; Rel : Boolean := False) is
-      P : Point2D := Convertit_Point(Ps);
+      P : Point2D := Chaine_Vers_Point(Ps);
    begin
       if Rel then
          P := Rel_Vers_Abs(P, L);
@@ -59,10 +64,11 @@ package body Parser_Svg is
       Insertion_Queue(L, P);
    end;
 
+   -- Ajoute les points correspondant à "C c1x,c1y c2x,c2y x,y" en fin de liste
    procedure Lit_Bezier(C1s, C2s, P2s : String; L : out Liste; Rel : Boolean := False) is
-      C1 : Point2D := Convertit_Point(C1s);
-      C2 : Point2D := Convertit_Point(C2s);
-      P2 : Point2D := Convertit_Point(P2s);
+      C1 : Point2D := Chaine_Vers_Point(C1s);
+      C2 : Point2D := Chaine_Vers_Point(C2s);
+      P2 : Point2D := Chaine_Vers_Point(P2s);
    begin
       if Rel then
          C1 := Rel_Vers_Abs(C1, L);
@@ -73,9 +79,10 @@ package body Parser_Svg is
       Bezier(Queue(L), C1, C2, P2, BEZIER_NB_PTS, L);
    end;
 
+   -- Ajoute les points correspondant à "C cx,cy x,y" en fin de liste
    procedure Lit_Bezier(Cs, P2s : String; L : out Liste; Rel : Boolean := False) is
-      C : Point2D := Convertit_Point(Cs);
-      P2 : Point2D := Convertit_Point(P2s);
+      C : Point2D := Chaine_Vers_Point(Cs);
+      P2 : Point2D := Chaine_Vers_Point(P2s);
    begin
       if Rel then
          C := Rel_Vers_Abs(C, L);
@@ -93,11 +100,9 @@ package body Parser_Svg is
       procedure Cas_Lettres is
       begin
          -- I designe l'index du premier parametre, et non de la lettre
+         -- Ca permet de gerer les cas du genre "M x1,y1 x2,y2 x3,y3"
          case Der_Lettre is
-            when 'm'|'M' => -- Debut du chemin : M x,y
-               Lit_Point(Slice(Subs, I), L, Is_Lower(Der_Lettre));
-               I := I + 1;
-            when 'l'|'L' => -- Ligne droite : L x,y
+            when 'm'|'M'|'l'|'L' =>
                Lit_Point(Slice(Subs, I), L, Is_Lower(Der_Lettre));
                I := I + 1;
             when 'h'|'H' => -- Droite horizontale : H x
@@ -126,7 +131,7 @@ package body Parser_Svg is
             Sub : constant String := Slice(Subs, I);
          begin
             case Sub(Sub'First) is
-               when 'm'|'M'|'l'|'L'|'h'|'H'|'v'|'V'|'c'|'C'|'q'|'Q' => -- Nouvelle lettre
+               when 'm'|'M'|'l'|'L'|'h'|'H'|'v'|'V'|'c'|'C'|'q'|'Q' =>
                   Der_Lettre := Sub(Sub'First);
                   I := I + 1;
                when others => null; -- On conserve la lettre du tour precedent
